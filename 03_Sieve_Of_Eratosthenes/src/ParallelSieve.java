@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collector;
 
 public class ParallelSieve {
     /**
@@ -12,7 +13,9 @@ public class ParallelSieve {
     private int nrOfThreads;
     private int[] primes;
     private byte[] odds;
-    private ArrayList<Long> allPrimes;
+    //private ArrayList<Long> allPrimes;
+    private int[][] allPrimes;
+    private int[] totalPrimes;
     private final ReentrantLock reentrantLock = new ReentrantLock();
     private CyclicBarrier cb;
 
@@ -33,16 +36,6 @@ public class ParallelSieve {
 
     private void init(){
         odds = new byte[n/16 + 1];
-        allPrimes = new ArrayList<>();
-
-        // Produce primes < sqrt(N), the small table
-        SieveOfEratosthenes soe = new SieveOfEratosthenes((int) Math.sqrt(n));
-        primes = soe.getPrimes();
-        writeToGlobalArray(primes);
-
-        int biggestPrime = primes[primes.length - 1];
-        startIndex = getIndex(biggestPrime) + 1;
-        endIndex = getIndex(n);
 
         // deciding nr of threads
         if (k < 1) nrOfThreads = Runtime.getRuntime().availableProcessors();
@@ -53,28 +46,39 @@ public class ParallelSieve {
         }
         else bytesPerThread = odds.length / nrOfThreads;
 
+        allPrimes = new int[nrOfThreads+1][];
+
+        // Produce primes < sqrt(N), the small table
+        SieveOfEratosthenes soe = new SieveOfEratosthenes((int) Math.sqrt(n));
+        primes = soe.getPrimes();
+        allPrimes[0] = primes;
+
+        int biggestPrime = primes[primes.length - 1];
+        startIndex = getIndex(biggestPrime) + 1;
+        endIndex = getIndex(n);
+
         cb = new CyclicBarrier(nrOfThreads + 1);
     }
 
 
     private class Worker implements Runnable{
-        int start, end;
+        int start, end, id;
         int localNumOfPrimes = 0;
         int primeIndex = 0;
 
-        Worker(int start, int end){
+        Worker(int id, int start, int end){
             this.start = start;
             this.end = end;
+            this.id = id;
         }
 
         @Override
         public void run() {
             sieve();
-            int[] localPrimes = collectPrimes();
-            writeToGlobalArray(localPrimes);
+            collectPrimes();
 
-            try { cb.await();
-            } catch (Exception exception){exception.printStackTrace();}
+            try { cb.await(); }
+            catch (Exception exception){exception.printStackTrace();}
         }
 
 
@@ -157,7 +161,7 @@ public class ParallelSieve {
          * creates an array of that size and populates the new array with the primes.
          * @return An array containing all the primes up to and including 'n'.
          */
-        private int[] collectPrimes() {
+        private void collectPrimes() {
             for (int i = getNum(start); i <= n && i <= end * 2; i += 2)
                 if (isPrime(i))
                     localNumOfPrimes++;
@@ -168,7 +172,7 @@ public class ParallelSieve {
             for (int i = getNum(start); i <= n && i <= end * 2; i += 2)
                 if (isPrime(i)) primes[j++] = i;
 
-            return primes;
+            allPrimes[id] = primes;
         }
 
         /**
@@ -198,24 +202,43 @@ public class ParallelSieve {
      * This is the public method which is called by other classes to start the Parallel Sieve.
      * @return ArrayList<Long> which contains all founded primes.
      */
-    public ArrayList<Long> work(){
+    public int[] work(){
         int s, e; // start index and end index
         init();
 
-        for (int i = 0; i < nrOfThreads - 1; i++){
+        int i;
+        for (i = 0; i < nrOfThreads - 1; i++){
             if (i == 0) s = startIndex;
             else s = (i * bytesPerThread * 8) - 1;
             e = ((i+1) * bytesPerThread * 8) - 1;
-            new Thread(new Worker(s, e)).start();
+            new Thread(new Worker(i+1, s, e)).start();
         }
         s = ((nrOfThreads - 1) * bytesPerThread * 8) - 1;
         e = endIndex;
-        new Thread(new Worker(s, e)).start();
+        new Thread(new Worker(i+1, s, e)).start();
 
-        try { cb.await();
-        } catch (Exception exception){exception.printStackTrace();}
+        try { cb.await();}
+        catch (Exception exception){exception.printStackTrace();}
 
-        return allPrimes;
+
+        int len = 0;
+        for (i = 0; i < allPrimes.length; i++){
+            len += allPrimes[i].length;
+        }
+
+        /* Converting the 2-D array allPrimes to 1-D array totalPrimes*/
+        totalPrimes = new int[len];
+        len = 0;
+        for (i = 0; i < nrOfThreads - 1; i++){
+            new Thread(new Collector(i, 1, len)).start();
+            len += allPrimes[i].length;
+        }
+        new Thread(new Collector(i, 2, len)).start();
+
+        try { cb.await(); }
+        catch (Exception exception){exception.printStackTrace();}
+
+        return totalPrimes;
     }
 
     /**
@@ -227,17 +250,30 @@ public class ParallelSieve {
         return ((num/16) * 8) + ((num % 16) / 2);
     }
 
-    private void writeToGlobalArray(int[] primes) {
-        reentrantLock.lock();
-        try {
-            for (long prime : primes) {
-                allPrimes.add(prime);
+
+    private class Collector implements Runnable {
+        int row; int nrOfRows; int start;
+
+        Collector(int row, int nrOfRows, int start){
+            this.row = row; this.nrOfRows = nrOfRows; this.start = start;
+        }
+
+        @Override
+        public void run() {
+            for (int i = 0; i < nrOfRows; i++){
+                row += i;
+                for (int j = 0; j < allPrimes[row].length; j++){
+                    totalPrimes[start++] = allPrimes[row][j];
+                }
             }
-        } catch (Exception e) {e.printStackTrace();}
-        finally {
-            reentrantLock.unlock();
+
+            try { cb.await(); }
+            catch (Exception exception){exception.printStackTrace();}
         }
     }
+
+
+
 }
 
 

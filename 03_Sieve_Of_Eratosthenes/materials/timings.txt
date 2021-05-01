@@ -1,25 +1,25 @@
 Times in millisecond:
 N = 2,000,000
-	Sequential Sieve:			7
-	Parallel Sieve:				5
-	Sequential factorization:	145
-	Parallel Factorization:		70
+	Sequential Sieve          : 7
+	Parallel Sieve            : 4
+	Sequential factorization  : 7
+	Parallel Factorization    : 6
 
 N = 20,000,000
-	Sequential Sieve:			72
-	Parallel Sieve:				43
-	Sequential factorization:	1238
-	Parallel Factorization:		60
+	Sequential Sieve          : 78
+	Parallel Sieve            : 18
+	Sequential factorization  : 69
+	Parallel Factorization    : 24
 
 N = 200,000,000
-	Sequential Sieve:			941
-	Parallel Sieve:				508
-	Sequential factorization:	11534
-	Parallel Factorization:		71
+	Sequential Sieve          : 862
+	Parallel Sieve            : 181
+	Sequential factorization  : 1017
+	Parallel Factorization    : 269
 
 N = 2,000,000,000
-	Sequential Sieve:			13295
-	Parallel Sieve:				8276
-	Sequential factorization:	104239
-	Parallel Factorization:		71
+	Sequential Sieve          : 13226
+	Parallel Sieve            : 5193
+	Sequential factorization  : 13192
+	Parallel Factorization    : 2152
 

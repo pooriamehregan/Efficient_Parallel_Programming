@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class Main {
+public class MainClass {
     private static SieveOfEratosthenes soe;
     private static ParallelSieve ps;
     private static ParallelFactorization pf;
@@ -41,7 +41,7 @@ public class Main {
      * Gets called when user gives no argument to the program.
      *
      * @param values are an int array of size for n values: 2 million, 20 million, 200 million, 2 billion.
-     * @return a double array which includes timings for alle 4 different n values.
+     * @return a double array which includes timings for all 4 different n values.
      */
     private static long[][] executeAutomaticAction(int[] values) {
         long[][] timings = new long[values.length][values.length];
@@ -62,41 +62,23 @@ public class Main {
         soe = new SieveOfEratosthenes(n);
         ps = new ParallelSieve(n, k);
         pf = new ParallelFactorization(n, k);
+
+        System.out.printf("%nTiming the 4 algorithms 7 times for %,d.%n", n);
         long[] times = getAlgorithmTimes(n);
 
-        long longN = n;
-        long nSquared = longN * longN;
+        // find the 100 largest values less than n * n
+        long nSquared = (long) n * (long) n;
         long[] largests = getLargest(nSquared);
+
+        System.out.printf("Factorizing 100 largest values less than %,d.%n" , nSquared);
         ArrayList<ArrayList<Long>> factors = parFactorize(largests);
+
+        System.out.printf("Printing factorizations for %,d to file.%n", n);
         printToFiles(n, largests, factors);
 
         return times;
     }
 
-
-    /**
-     * @param timings [[]--> 4 * algorithmTiming ]--> 4 * differentInputSizes
-     */
-    private static void writeTimesToFile(int[] values, long[][] timings) {
-        Path path = Paths.get(".."+File.separator+"materials"+ File.separator +"timings.txt");
-        //Path path = Paths.get("03_Sieve_Of_Eratosthenes"+File.separator+"materials"+ File.separator +"timings.txt");
-        try (BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-            writer.flush();
-            writer.write("Times in millisecond:\n");
-
-            for (int i = 0; i < timings.length; i++) {
-                writer.write(String.format("N = %,d%n" +
-                                "\tSequential Sieve          : %d%n" +
-                                "\tParallel Sieve            : %d%n" +
-                                "\tSequential factorization  : %d%n" +
-                                "\tParallel Factorization    : %d%n%n",
-                        values[i], timings[i][0], timings[i][1], timings[i][2], timings[i][3]));
-            }
-            writer.flush();
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        }
-    }
 
     /**
      * Times all 4 algorithms.
@@ -123,36 +105,28 @@ public class Main {
     private static long getMedianTiming(int choice, int n) {
         long start;
         long[] timings = new long[7];
+
         for (int i = 0; i < timings.length; i++) {
             start = System.nanoTime();
             switch (choice) {
                 case 1: {
-                    soe.getPrimes();
-                    break;
+                    soe.getPrimes(); break;
                 }
                 case 2: {
-                    ps.work();
-                    break;
+                    ps.work(); break;
                 }
                 case 3: {
-                    long longN = n;
-                    long nSquared = longN * longN;
-                    long[] largests = getLargest(nSquared);
-                    seqFactorize(largests);
-                    break;
+                    SieveOfEratosthenes.factor(soe.getPrimes(), n); break;
                 }
-                case 4:
-                    long longN = n;
-                    long nSquared = longN * longN;
-                    long[] largests = getLargest(nSquared);
-                    parFactorize(largests);
-                    break;
+                case 4: {
+                    pf.work(n); break;
+                }
                 default:
-                    System.out.println("Choice is not valid!");
-                    break;
+                    System.out.println("Choice is not valid!"); break;
             }
             timings[i] = (System.nanoTime() - start) / 1000000;
         }
+
         return getMedian(timings);
     }
 
@@ -185,9 +159,10 @@ public class Main {
      */
     private static ArrayList<ArrayList<Long>> parFactorize(long[] largests) {
         ArrayList<ArrayList<Long>> factors = new ArrayList<>();
-        for (long largest : largests) {
+
+        for (long largest : largests)
             factors.add(pf.work(largest));
-        }
+
         return factors;
     }
 
@@ -199,9 +174,10 @@ public class Main {
     private static ArrayList<ArrayList<Long>> seqFactorize(long[] largests) {
         int[] primes = soe.getPrimes();
         ArrayList<ArrayList<Long>> factors = new ArrayList<>();
-        for (long largest : largests) {
-            factors.addAll(Collections.singletonList(SieveOfEratosthenes.factor(primes, largest)));
-        }
+
+        for (long largest : largests)
+            factors.add(SieveOfEratosthenes.factor(primes, largest));
+
         return factors;
     }
 
@@ -220,5 +196,30 @@ public class Main {
             }
         }
         o3p.writeFactors();
+    }
+
+    /**
+     * @param timings [[]--> 4 * algorithmTiming ]--> 4 * differentInputSizes
+     */
+    private static void writeTimesToFile(int[] values, long[][] timings) {
+        Path path = Paths.get(".."+File.separator+"materials"+ File.separator +"timings.txt");
+//        Path path = Paths.get("materials"+ File.separator +"timings.txt");
+
+        try (BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            writer.flush();
+            writer.write("Times in millisecond:\n");
+
+            for (int i = 0; i < timings.length; i++) {
+                writer.write(String.format("N = %,d%n" +
+                                "\tSequential Sieve          : %d%n" +
+                                "\tParallel Sieve            : %d%n" +
+                                "\tSequential factorization  : %d%n" +
+                                "\tParallel Factorization    : %d%n%n",
+                        values[i], timings[i][0], timings[i][1], timings[i][2], timings[i][3]));
+            }
+            writer.flush();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
     }
 }

@@ -1,0 +1,30 @@
+N = 1,000
+	Sequential          : 0 millis
+	Parallel            : 5 millis
+	Speedup             : 0.00 millis
+
+N = 10,000
+	Sequential          : 0 millis
+	Parallel            : 4 millis
+	Speedup             : 0.00 millis
+
+N = 100,000
+	Sequential          : 1 millis
+	Parallel            : 6 millis
+	Speedup             : 0.17 millis
+
+N = 1,000,000
+	Sequential          : 7 millis
+	Parallel            : 9 millis
+	Speedup             : 0.78 millis
+
+N = 10,000,000
+	Sequential          : 99 millis
+	Parallel            : 46 millis
+	Speedup             : 2.15 millis
+
+N = 100,000,000
+	Sequential          : 885 millis
+	Parallel            : 350 millis
+	Speedup             : 2.53 millis
+

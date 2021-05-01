@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -8,69 +9,69 @@ public class ParallelFactorization {
     private final int[] primes;
     private final CyclicBarrier cb;
     ReentrantLock reentrantLock = new ReentrantLock();
+    ReentrantLock dealerLock = new ReentrantLock();
     private ArrayList<Long> factors;
 
     public ParallelFactorization(int n, int k){
-
-        SieveOfEratosthenes soe = new SieveOfEratosthenes((int) Math.sqrt(n));
-        this.primes = soe.getPrimes();
-
-//        ParallelSieve ps = new ParallelSieve((int) Math.sqrt(n), k);
-//        this.primes = toIntArray(ps.work());
+        ParallelSieve soe = new ParallelSieve(n, k);
+        this.primes = soe.work();
 
         if (k < 1) nrOfThreads = Runtime.getRuntime().availableProcessors();
         else nrOfThreads = k;
-        if (primes.length <= nrOfThreads) nrOfThreads = primes.length;
+        if (primes.length < nrOfThreads) nrOfThreads = primes.length;
 
         cb = new CyclicBarrier(nrOfThreads + 1);
     }
 
-    private int[] toIntArray(ArrayList<Long> a) {
-        int[] arr = new int[a.size()];
-        for (int i = 0; i < arr.length; i++){
-            arr[i] =  a.get(i).intValue();
-        }
-        return arr;
-    }
-
     private class Worker implements Runnable{
         private final long n;
+
         Worker(long n){ this.n = n; }
 
         @Override
         public void run() {
-            ArrayList<Long> localFactors = new ArrayList<>();
-            int[] localPrimes = new int[2];
-            dealNextPrimes(localPrimes);
-            while (localPrimes[0] != -1){
-                localFactors.addAll(factorize(localPrimes));
-                if (localPrimes[1] == -1) break;
-                dealNextPrimes(localPrimes);
-            }
-            addToGloblFactors(localFactors);
+            ArrayList<Long> localFactors = factorize();
+            addToGlobalFactors(localFactors);
 
             try {cb.await();}
             catch (Exception exception) {exception.printStackTrace();}
         }
 
-        private ArrayList<Long> factorize(int[] localPrimes) {
+        private ArrayList<Long> factorize() {
             // What is being divided is called the dividend, which is divided by the divisor
             long dividend = n;
-            long divisor = localPrimes[0];
+            long divisor;
+
             ArrayList<Long> localFactors = new ArrayList<>();
-            int i = 0;
-            while (divisor <= Math.sqrt(n)) {
-                if ((dividend % divisor) != 0) {          // if dividend is not divisible by divisor
-                    i++;
-                    if (i == localPrimes.length) {
-                        if (end - 1 == start && dividend > 1) localFactors.add(dividend);    // TODO: maybe check if divisor is the last prime
-                        break;
+
+            long[] localPrimes = new long[3];
+            dealNextPrimes(localPrimes);
+
+            int i;
+            while (localPrimes[0] != -1) {
+                divisor = localPrimes[0];
+                i = 1;
+                while (true) {
+                    if ((dividend % divisor) == 0) {          // if dividend is divisible by divisor
+                        dividend = dividend / divisor;
+                        localFactors.add(divisor);
+                    } else {
+                        if (i == 1) {
+                            if (localPrimes[1] == -1) {
+                                // if this is the last prime, add it
+                                if (localPrimes[0] == primes[primes.length - 1])
+                                    localFactors.add(dividend);
+                                break;
+                            } else {
+                                divisor = localPrimes[1];
+                                i = 2;
+                            }
+                        } else {
+                            break;
+                        }
                     }
-                    if (localPrimes[i] != -1) divisor = localPrimes[i];
-                    continue;
                 }
-                dividend = dividend / divisor;
-                localFactors.add(divisor);
+                dealNextPrimes(localPrimes);
             }
             return localFactors;
         }
@@ -80,11 +81,9 @@ public class ParallelFactorization {
      * Adds the founded local factors to the global array list of all factors
      * @param localFactors are the long arraylist of local factors.
      */
-    private void addToGloblFactors(ArrayList<Long> localFactors) {
+    private void addToGlobalFactors(ArrayList<Long> localFactors) {
         reentrantLock.lock();
-        try {
-            factors.addAll(localFactors);
-        }
+        try { factors.addAll(localFactors); }
         catch (Exception e) {e.printStackTrace();}
         finally {reentrantLock.unlock();}
     }
@@ -116,24 +115,27 @@ public class ParallelFactorization {
     /**
      * Deals primes to thread, like a card dealer.
      */
-    private void dealNextPrimes(int[] localPrimes){
-        reentrantLock.lock();
+    private void dealNextPrimes(long[] localPrimes){
+        dealerLock.lock();
         try {
-            if (end == start) {
+            int remains = end - start;
+            localPrimes[2] = remains;
+
+            if (remains == 0) {
                 localPrimes[0] = -1;
                 localPrimes[1] = -1;
             }
-            else if (end - start == 1) {
+            else if (remains == 1) {
                 localPrimes[0] = primes[++start];
                 localPrimes[1] = -1;
             }
-            else {  // giving each thread 2 primes, one from start of the prime array, and one from end
+            else {  // giving each thre[ primes, one from start of the prime array, and one from end
                 localPrimes[0] = primes[start++];
                 localPrimes[1] = primes[end--];
             }
         }
         catch (Exception e) {e.printStackTrace();}
-        finally {reentrantLock.unlock();}
+        finally {dealerLock.unlock();}
     }
 
     /**
