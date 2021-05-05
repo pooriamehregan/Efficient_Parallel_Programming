@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * @author Shiela Kristoffersen
  *
@@ -43,7 +47,6 @@ class ConvexHull {
 
 
   IntList quickHull() {
-
     /* Find any two points we know are on the line. Here we choose the points
     with the maximum and minimum x coordinates */
     for (int i = 0; i < points.size(); i++) {
@@ -124,6 +127,7 @@ class ConvexHull {
     } // end for loop
 
     if (pointsToLeft.size() == 0) {
+      List<Integer> onLinePoints = new LinkedList<>();
 
       for (int i = 0; i < points.size(); i++) {
         p = points.get(i);
@@ -132,8 +136,15 @@ class ConvexHull {
         /* if this point is on the outer line and the point is not the start or end point
         * then add it to the convex hull */
         if ( d == 0 && p != point1 && p != point2) {
-          convexHull.add(p);
+          onLinePoints.add(p);
         }
+      }
+
+      while (!onLinePoints.isEmpty()) {
+        if (onLinePoints.size() == 1)
+          convexHull.add(onLinePoints.remove(0));
+        else
+          convexHull.add(getMin(onLinePoints, point2));
       }
     }
 
@@ -143,6 +154,30 @@ class ConvexHull {
       convexHull.add(maxPoint);
       findPointsToLeft(point1, maxPoint, pointsToLeft, convexHull);
     }
+  }
+
+  private int getMin(List<Integer> onLinePoints, int point2) {
+    double d1, d2;
+    int p;
+    int xPow2, yPow2;
+    p = onLinePoints.get(0);
+    xPow2 = (x[point2] - x[p]) * (x[point2] - x[p]);
+    yPow2 = (y[point2] - y[p]) * (y[point2] - y[p]);
+    d1 = xPow2 + yPow2;
+
+    int ind = 0;
+    for (int i = 0; i < onLinePoints.size(); i++) {
+      p = onLinePoints.get(i);
+      xPow2 = (x[point2] - x[p]) * (x[point2] - x[p]);
+      yPow2 = (y[point2] - y[p]) * (y[point2] - y[p]);
+      d2 =  xPow2 + yPow2;
+      if (d2 < d1) {
+        d1 = d2;
+        ind = i;
+      }
+    }
+
+    return onLinePoints.remove(ind);
   }
 
 }

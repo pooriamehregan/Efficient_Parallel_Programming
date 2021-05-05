@@ -1,8 +1,10 @@
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 
 public class ParallelConvexHull {
     private final int n;
-    private final int nrOfThrds;
+    private int nrOfThrds;
     private final int nrOfElmnts;
     private final int[] x;
     private final int[] y;
@@ -27,7 +29,8 @@ public class ParallelConvexHull {
         // if given k is 0 then use the number of available processors or use customized k based on n
         if (k == 0)
             nrOfThrds = Runtime.getRuntime().availableProcessors();
-        else nrOfThrds = k;
+        else
+            nrOfThrds = k;
 
         nrOfElmnts = n / nrOfThrds;
         cb = new CyclicBarrier(nrOfThrds + 1);
@@ -58,28 +61,31 @@ public class ParallelConvexHull {
         for (IntList list : intLists){
             size += list.size();
         }
-
+        // calculating the size of the IntList to avoid creating larger and larger list each time it becomes full
         IntList finalIntList = new IntList(size);
         int index = 0;
-
+        int v = 0;
         // Gather the final points which should be used to find the big hull
         for (IntList intList : intLists) {
+//            System.out.print("id: " + v++);
+//            intList.print();
             for (int l = 0; l < intList.size(); l++) {
                 finalIntList.add(intList.get(l), index++);
             }
         }
+
         // You should call the quickHull() on the returned convexHull to get the big hull.
         return new ConvexHull(n, x, y, finalIntList);
     }
 
 
     private class Worker implements Runnable {
-        int MAX_X, MAX_Y, MIN_X;
+        int MAX_X, MIN_X;
         int end, start;
         int id;
         IntList points;
 
-        public Worker(int id, int start, int end){
+        Worker(int id, int start, int end){
             this.id = id;
             this.start = start;
             this.end = end;
@@ -100,6 +106,10 @@ public class ParallelConvexHull {
         }
 
         IntList quickHull() {
+            /* Initialize Max and Min to avoid them being initialized by their default value which is 0. */
+            MIN_X = start;
+            MAX_X = start;
+
             /* Find any two points we know are on the line. Here we choose the points
             with the maximum and minimum x coordinates */
             for (int i = start; i < end; i++) {
@@ -155,14 +165,14 @@ public class ParallelConvexHull {
                 /* Getting the index of the point */
                 p = points.get(i);
 
-              /* Calculating the 'distance' to the line point1 --> point2.
+                /* Calculating the 'distance' to the line point1 --> point2.
               The actual distance is (ax + by + c ) / squareroot(a^2 + b^2).
               However, the denominator of the fraction only scales down the distance,
               and since we are only interested in the distance relative to the other
               points, we can exclude that calculation. */
                 d = a * x[p] + b * y[p] + c;
 
-                if (d > 0) {
+                if (d >= 0) {
                     pointsToLeft.add(p);
 
                     if (d > maxDistance) {
@@ -173,6 +183,7 @@ public class ParallelConvexHull {
             } // end for loop
 
             if (pointsToLeft.size() == 0) {
+                List<Integer> onLinePoints = new LinkedList<>();
 
                 for (int i = 0; i < points.size(); i++) {
                     p = points.get(i);
@@ -180,18 +191,49 @@ public class ParallelConvexHull {
 
                     /* if this point is on the outer line and the point is not the start or end point
                      * then add it to the convex hull */
-                    if ( d == 0 && p != point1 && p != point2) {
-                        convexHull.add(p);
-                    }
+                    if ( d == 0 && p != point1 && p != point2)
+                        onLinePoints.add(p);
+                }
+
+                while (!onLinePoints.isEmpty()) {
+                    if (onLinePoints.size() == 1)
+                        convexHull.add(onLinePoints.remove(0));
+                    else
+                        convexHull.add(getMin(onLinePoints, point2));
                 }
             }
 
             /* Only continuing the recursion if we find a point to the left of the line */
-            else if (maxPoint >= 0) {
+            if (maxPoint >= 0) {
                 findPointsToLeft(maxPoint, point2, pointsToLeft, convexHull);
                 convexHull.add(maxPoint);
                 findPointsToLeft(point1, maxPoint, pointsToLeft, convexHull);
             }
+        }
+
+
+        private int getMin(List<Integer> onLinePoints, int point2) {
+            double d1, d2;
+            int p;
+            int xPow2, yPow2;
+            p = onLinePoints.get(0);
+            xPow2 = (x[point2] - x[p]) * (x[point2] - x[p]);
+            yPow2 = (y[point2] - y[p]) * (y[point2] - y[p]);
+            d1 = xPow2 + yPow2;
+
+            int ind = 0;
+            for (int i = 1; i < onLinePoints.size(); i++) {
+                p = onLinePoints.get(i);
+                xPow2 = (x[point2] - x[p]) * (x[point2] - x[p]);
+                yPow2 = (y[point2] - y[p]) * (y[point2] - y[p]);
+                d2 =  xPow2 + yPow2;
+                if (d2 < d1) {
+                    d1 = d2;
+                    ind = i;
+                }
+            }
+
+            return onLinePoints.remove(ind);
         }
     }
 

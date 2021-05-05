@@ -52,6 +52,8 @@ public class TheMain {
         long s1 = System.currentTimeMillis();
         ConvexHull ch = new ConvexHull(n, x, y, points);
         IntList convexHull = ch.quickHull();
+//        convexHull.print();
+//        System.out.println();
         long time1 = (System.currentTimeMillis() - s1);
         System.out.printf("Sequential time : %,d milli seconds%n", time1);
 
@@ -60,6 +62,8 @@ public class TheMain {
         ParallelConvexHull pch = new ParallelConvexHull(n, k, x, y, points);
         ConvexHull parConvexHull = pch.work();
         IntList finalIntList = parConvexHull.quickHull();
+//        finalIntList.print();
+//        System.out.println();
         long time2 = (System.currentTimeMillis() - s2);
         System.out.printf("Parallel time   : %,d milli seconds%n", time2 );
 
@@ -84,7 +88,6 @@ public class TheMain {
         else
             System.out.println("\nINFO: Not saving the points for n > 10000!" +
                 "\nTry with lower n values!");
-
     }
 
 
