@@ -202,7 +202,7 @@ public class MainClass {
      * @param timings [[]--> 4 * algorithmTiming ]--> 4 * differentInputSizes
      */
     private static void writeTimesToFile(int[] values, long[][] timings) {
-        Path path = Paths.get(".."+File.separator+"materials"+ File.separator +"timings.txt");
+        Path path = Paths.get("03_Sieve_Of_Eratosthenes"+File.separator+"materials"+ File.separator +"timings.txt");
 //        Path path = Paths.get("materials"+ File.separator +"timings.txt");
 
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {

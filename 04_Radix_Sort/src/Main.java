@@ -148,7 +148,7 @@ public class Main {
 
 
     private static void writeTimesToFile(int[] values, long[][] timings, double[] speedups) {
-        Path path = Paths.get(".."+ File.separator + "out" + File.separator + "timings.txt");
+        Path path = Paths.get("04_Radix_Sort"+ File.separator + "out" + File.separator + "timings.txt");
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             writer.flush();
 

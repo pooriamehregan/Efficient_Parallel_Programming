@@ -55,7 +55,7 @@ class Oblig5Precode extends JFrame{
 
 	public void writeHullPoints(){
 		//String filename = "CONVEX-HULL-POINTS_" + n + ".txt";
-		String filename = ".."+ File.separator +"materials" + File.separator + "CONVEX-HULL-POINTS_\"" + n + "\".txt";
+		String filename = "05_Convex_Hull"+ File.separator +"materials" + File.separator + "CONVEX-HULL-POINTS_\"" + n + "\".txt";
 
 		try (PrintWriter writer = new PrintWriter(filename)) {
 			writer.printf("Found %d number of convex hull points in a graph with n = %d:\n______________________________________________________\n\n", this.theCoHull.size(), n);

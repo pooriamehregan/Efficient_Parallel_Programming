@@ -142,7 +142,7 @@ public class TheMain {
 
 
     private static void saveTimes(long[][] times, int[] nVals) {
-        Path path = Paths.get(".."+ File.separator +"materials" + File.separator + "timings.txt");
+        Path path = Paths.get("05_Convex_Hull"+ File.separator + "materials" + File.separator + "timings.txt");
         try (BufferedWriter bufferedWriter = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)){
             for (int i = 0; i < nVals.length; i++) {
                 bufferedWriter.write(String.format("N: %,d%n" +

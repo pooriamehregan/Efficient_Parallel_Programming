@@ -100,8 +100,8 @@ public class Main {
             for (int i = 0; i < array[0].length; i++) {
                 System.out.printf("A%d:\tN: %-9d", x+1, array[0][i]);
                 for (int j = 0; j < array[1].length; j++) {
-                    s = (j > 0) ? "\t\t\t" : "\t";
-                    System.out.printf("%sK: %-3d\ttime: %-9.4f%n", s, array[1][j], times[x][i][j]);
+                    s = (j > 0) ? "\t\t\t\t\t" : "\t";
+                    System.out.printf("%sK: %-3d\ttime: %-9.4f milliseconds%n", s, array[1][j], times[x][i][j]);
                 }
             }
         }

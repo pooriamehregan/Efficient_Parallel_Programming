@@ -95,7 +95,7 @@ public class Oblig3Precode {
      */
 
     public void writeFactors() {
-        String filename = ".."+File.separator+"materials"+File.separator+"Factors_" + n + ".txt";
+        String filename = "03_Sieve_Of_Eratosthenes"+File.separator+"materials"+File.separator+"Factors_" + n + ".txt";
 //        String filename = "materials"+File.separator+"Factors_" + n + ".txt";
 
         try (PrintWriter writer = new PrintWriter(filename)) {

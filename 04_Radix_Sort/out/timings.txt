@@ -1,6 +1,6 @@
 N = 1,000
 	Sequential          : 0 millis
-	Parallel            : 5 millis
+	Parallel            : 6 millis
 	Speedup             : 0.00 millis
 
 N = 10,000
@@ -14,17 +14,17 @@ N = 100,000
 	Speedup             : 0.17 millis
 
 N = 1,000,000
-	Sequential          : 7 millis
+	Sequential          : 9 millis
 	Parallel            : 9 millis
-	Speedup             : 0.78 millis
+	Speedup             : 1.00 millis
 
 N = 10,000,000
-	Sequential          : 99 millis
-	Parallel            : 46 millis
-	Speedup             : 2.15 millis
+	Sequential          : 108 millis
+	Parallel            : 52 millis
+	Speedup             : 2.08 millis
 
 N = 100,000,000
-	Sequential          : 885 millis
-	Parallel            : 350 millis
-	Speedup             : 2.53 millis
+	Sequential          : 1,024 millis
+	Parallel            : 655 millis
+	Speedup             : 1.56 millis
 

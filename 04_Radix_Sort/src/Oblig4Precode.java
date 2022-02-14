@@ -51,7 +51,7 @@ public class Oblig4Precode {
     }
 
     public static void saveResults(Algorithm algo, int seed, int[] arr) {
-        String filename = String.format(".." + File.separator + "out" + File.separator +"O4Result_%s_%d_%d.txt", algo, seed, arr.length);
+        String filename = String.format("04_Radix_Sort" + File.separator + "out" + File.separator +"O4Result_%s_%d_%d.txt", algo, seed, arr.length);
 
         try (PrintWriter writer = new PrintWriter(filename)) {
             writer.printf("Results for n=%d with seed=%d\n", arr.length, seed);
